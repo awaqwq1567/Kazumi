@@ -15,7 +15,7 @@ on:
 jobs:
   flutter-build-android:
     name: "Release for android"
-    runs-on: "ubuntu-latest" 
+    runs-on: "ubuntu-latest"
     permissions: write-all
     steps:
       - name: Clone repository
@@ -80,9 +80,45 @@ jobs:
         run: ls -l release_outputs/
         shell: bash
 
-      - name: Create release
+      - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            release_outputs/*.apk
+          tag_name: ${{ env.tag }}
+          release_name: Release ${{ env.tag }}
+          body: |
+            Release notes for ${{ env.tag }}
+          draft: false
+          prerelease: false
+
+      - name: Upload 32-bit APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_outputs/Kazumi_android_${{ env.tag }}_32bit.apk
+          asset_name: Kazumi_android_${{ env.tag }}_32bit.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload 64-bit APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_outputs/Kazumi_android_${{ env.tag }}_64bit.apk
+          asset_name: Kazumi_android_${{ env.tag }}_64bit.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload x64 APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_outputs/Kazumi_android_${{ env.tag }}_x64.apk
+          asset_name: Kazumi_android_${{ env.tag }}_x64.apk
+          asset_content_type: application/vnd.android.package-archive
