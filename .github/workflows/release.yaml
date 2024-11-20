@@ -80,63 +80,9 @@ jobs:
         run: ls -l release_outputs/
         shell: bash
 
-      - name: Upload android outputs
-        uses: actions/upload-artifact@v4
-        with:
-          name: android_outputs
-          path: release_outputs/*.apk
-          if-no-files-found: error
-
-  release:
-    name: "Release"
-    runs-on: "ubuntu-latest"
-    needs: [flutter-build-android]
-    permissions: write-all
-    steps:
-      - name: Extract tag name
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          else
-            echo "tag=dev" >> $GITHUB_ENV
-          fi
-        shell: bash
-
-      - name: Download android build file
-        uses: actions/download-artifact@v4
-        with:
-          name: android_outputs
-          path: android_outputs
-          fail-not-found: true
-
-      - name: List files in android_outputs directory
-        run: ls -l android_outputs
-
-      - name: Create required directories
-        run: |
-          mkdir -p build/unsigned
-          mkdir -p build/signed
-
-      - name: Copy android build file to unsigned folder
-        run: cp android_outputs/* build/unsigned/
-
-      - name: Sign APK
-        id: sign_app
-        uses: filippoLeporati93/android-release-signer@v1
-        with:
-          releaseDirectory: build/unsigned
-          signingKeyBase64: ${{ secrets.SIGNING_KEY_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Copy Signed android build file
-        run: cp build/unsigned/* build/signed/
-
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            build/signed/*.apk
+            release_outputs/*.apk
